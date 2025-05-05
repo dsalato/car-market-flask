@@ -5,11 +5,11 @@
     <table>
         <thead>
             <tr>
-                <th>Марка</th>
-                <th>Модель</th>
-                <th>Год</th>
-                <th>Цена</th>
-                <th>Пробег</th>
+                <th><a class="car_a" href="?sort_by=brand&order={{ 'desc' if sort_by == 'brand' and order == 'asc' else 'asc' }}">Марка</a></th>
+                <th><a class="car_a" href="?sort_by=model&order={{ 'desc' if sort_by == 'model' and order == 'asc' else 'asc' }}">Модель</a></th>
+                <th><a class="car_a" href="?sort_by=year&order={{ 'desc' if sort_by == 'year' and order == 'asc' else 'asc' }}">Год</a></th>
+                <th><a class="car_a" href="?sort_by=price&order={{ 'desc' if sort_by == 'price' and order == 'asc' else 'asc' }}">Цена</a></th>
+                <th><a class="car_a" href="?sort_by=mileage&order={{ 'desc' if sort_by == 'mileage' and order == 'asc' else 'asc' }}">Пробег</a></th>
                 <th>Действия</th>
             </tr>
         </thead>
@@ -22,6 +22,7 @@
                 <td>${{ "%.2f"|format(car.price) }}</td>
                 <td>{{ car.mileage }} km</td>
                 <td class="actions">
+                    <a href="{{ url_for('web.car_detail', id=car.id) }}" class="btn view">Детальная информация</a>
                     <a href="{{ url_for('web.edit_car', id=car.id) }}" class="btn edit">Изменить</a>
                     <a href="{{ url_for('web.delete_car', id=car.id) }}" class="btn delete">Удалить</a>
                 </td>

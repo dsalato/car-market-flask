@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="car-detail">
+    <h1>{{ car.brand }} {{ car.model }}</h1>
+
+    <div class="car-info">
+
+        <div class="car-specs">
+            <table>
+                <tr>
+                    <th>Характеристика</th>
+                    <th>Значение</th>
+                </tr>
+                <tr>
+                    <td>Год выпуска</td>
+                    <td>{{ car.year if car.year else 'Не указан' }}</td>
+                </tr>
+                <tr>
+                    <td>Цена</td>
+                    <td>${{ "{:,.2f}".format(car.price) }}</td>
+                </tr>
+                <tr>
+                    <td>Пробег</td>
+                    <td>{{ "{:,}".format(car.mileage) if car.mileage else 'Не указан' }} км</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="car-stats">
+        <h2>Статистика</h2>
+
+        <div class="stat-section">
+            <h3>Сравнение цены</h3>
+            <p>Средняя цена на рынке: ${{ "{:,.2f}".format(stats.price_comparison.avg) }}</p>
+            <p>Максимальная цена: ${{ "{:,.2f}".format(stats.price_comparison.max) }}</p>
+            <p>Минимальная цена: ${{ "{:,.2f}".format(stats.price_comparison.min) }}</p>
+            <p>Разница со средней:
+                {% set diff = car.price - stats.price_comparison.avg %}
+                {% if diff > 0 %}
+                    <span class="higher">+${{ "{:,.2f}".format(diff) }} выше</span>
+                {% elif diff < 0 %}
+                    <span class="lower">-${{ "{:,.2f}".format(-diff) }} ниже</span>
+                {% else %}
+                    равна средней
+                {% endif %}
+            </p>
+        </div>
+
+        {% if stats.mileage_comparison %}
+        <div class="stat-section">
+            <h3>Сравнение пробега</h3>
+            <p>Средний пробег на рынке: {{ "{:,}".format(stats.mileage_comparison.avg) }} км</p>
+            <p>Максимальный пробег: {{ "{:,}".format(stats.mileage_comparison.max) }} км</p>
+            <p>Минимальный пробег: {{ "{:,}".format(stats.mileage_comparison.min) }} км</p>
+            {% if car.mileage %}
+                <p>Разница со средним:
+                    {% set diff = car.mileage - stats.mileage_comparison.avg %}
+                    {% if diff > 0 %}
+                        <span class="higher">+{{ "{:,}".format(diff) }} км больше</span>
+                    {% elif diff < 0 %}
+                        <span class="lower">{{ "{:,}".format(-diff) }} км меньше</span>
+                    {% else %}
+                        равен среднему
+                    {% endif %}
+                </p>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if stats.age %}
+        <div class="stat-section">
+            <h3>Возраст автомобиля</h3>
+            <p>{{ stats.age }} лет</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="actions">
+        <a href="{{ url_for('web.edit_car', id=car.id) }}" class="btn">Изменить</a>
+        <a href="{{ url_for('web.delete_car', id=car.id) }}" class="btn delete">Удалить</a>
+        <a href="{{ url_for('web.list_cars') }}" class="btn">Назад к списку</a>
+    </div>
+</div>
+{% endblock %}

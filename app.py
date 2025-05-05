@@ -1,15 +1,16 @@
 from flask import Flask, render_template, request, url_for, redirect, Blueprint
-from flask_restplus import Api, Resource, fields
+from flask_restplus import Api, Resource, fields, reqparse
+import statistics
 
 app = Flask(__name__)
 
-
+# Инициализация API
 api = Api(app,
-          title='Car Market API',
-          description='API для рынка автомобилей',
           doc='/api/docs',
-          prefix='/api',
-          endpoint='api')
+          title='Car Market API',
+          description='API для управления автомобилями с сортировкой и статистикой',
+          prefix='/api')
+
 # Модель данных
 car_model = api.model('Car', {
     'id': fields.String(required=True, description='ID автомобиля'),
@@ -26,16 +27,59 @@ CARS = [
     {'id': '2', 'brand': 'BMW', 'model': 'X5', 'year': 2019, 'price': 45000, 'mileage': 30000},
 ]
 
-# Создание Blueprint для веб-интерфейса
-web = Blueprint('web', __name__, template_folder='templates')
+# Веб-интерфейс
+web = Blueprint('web', __name__, template_folder='templates', static_folder='static')
+
 
 @web.route('/')
 def index():
     return redirect(url_for('web.list_cars'))
 
+
 @web.route('/cars')
 def list_cars():
-    return render_template('cars.html', cars=CARS)
+    sort_by = request.args.get('sort_by')
+    order = request.args.get('order', 'asc')
+
+    cars = CARS.copy()
+    if sort_by in ['brand', 'model', 'year', 'price', 'mileage']:
+        reverse = order == 'desc'
+        try:
+            cars.sort(key=lambda x: float(x.get(sort_by, 0)), reverse=reverse)
+        except (ValueError, TypeError):
+            cars.sort(key=lambda x: str(x.get(sort_by, '')).lower(), reverse=reverse)
+
+    return render_template('cars.html',
+                           cars=cars,
+                           sort_by=sort_by,
+                           order=order)
+
+
+@web.route('/cars/<id>')
+def car_detail(id):
+    car = next((car for car in CARS if car['id'] == id), None)
+    if not car:
+        return "Автомобиль не найден", 404
+
+    # Статистика для этого автомобиля
+    stats = {
+        'price_comparison': {
+            'avg': round(statistics.mean([c['price'] for c in CARS]), 2),
+            'max': max([c['price'] for c in CARS]),
+            'min': min([c['price'] for c in CARS])
+        },
+        'mileage_comparison': {
+            'avg': round(statistics.mean([c['mileage'] for c in CARS if c.get('mileage')]), 2),
+            'max': max([c['mileage'] for c in CARS if c.get('mileage')]),
+            'min': min([c['mileage'] for c in CARS if c.get('mileage')])
+        } if any(c.get('mileage') for c in CARS) else None,
+        'age': 2025 - car['year'] if car.get('year') else None
+    }
+
+    return render_template('car_detail.html',
+                           car=car,
+                           stats=stats)
+
 
 @web.route('/cars/add', methods=['GET', 'POST'])
 def add_car():
@@ -43,9 +87,9 @@ def add_car():
         new_car = {
             'brand': request.form['brand'],
             'model': request.form['model'],
-            'year': int(request.form.get('year', 0)),
+            'year': int(request.form['year']) if request.form['year'] else None,
             'price': float(request.form['price']),
-            'mileage': int(request.form.get('mileage', 0))
+            'mileage': int(request.form['mileage']) if request.form['mileage'] else None
         }
         new_id = str(max(int(car['id']) for car in CARS) + 1) if CARS else '1'
         new_car['id'] = new_id
@@ -53,22 +97,24 @@ def add_car():
         return redirect(url_for('web.list_cars'))
     return render_template('edit_car.html', car=None)
 
+
 @web.route('/cars/edit/<id>', methods=['GET', 'POST'])
 def edit_car(id):
     car = next((car for car in CARS if car['id'] == id), None)
     if not car:
-        return "Car not found", 404
+        return "Автомобиль не найден", 404
 
     if request.method == 'POST':
         car.update({
             'brand': request.form['brand'],
             'model': request.form['model'],
-            'year': int(request.form.get('year', 0)),
+            'year': int(request.form['year']) if request.form['year'] else None,
             'price': float(request.form['price']),
-            'mileage': int(request.form.get('mileage', 0))
+            'mileage': int(request.form['mileage']) if request.form['mileage'] else None
         })
         return redirect(url_for('web.list_cars'))
     return render_template('edit_car.html', car=car)
+
 
 @web.route('/cars/delete/<id>')
 def delete_car(id):
@@ -76,66 +122,8 @@ def delete_car(id):
     CARS = [car for car in CARS if car['id'] != id]
     return redirect(url_for('web.list_cars'))
 
-# Регистрация Blueprint для веб-интерфейса
+
 app.register_blueprint(web, url_prefix='/web')
-
-# API Namespace
-ns_car = api.namespace('cars', description='Операции с автомобилями')
-
-@ns_car.route('/')
-class CarList(Resource):
-    @ns_car.marshal_list_with(car_model)
-    def get(self):
-        """Список всех автомобилей"""
-        return CARS
-
-    @ns_car.expect(car_model)
-    @ns_car.marshal_with(car_model, code=201)
-    def post(self):
-        """Добавить новый автомобиль"""
-        new_car = api.payload
-        if CARS:
-            max_id = max(int(car['id']) for car in CARS)
-            new_id = str(max_id + 1)
-        else:
-            new_id = '1'
-        new_car['id'] = new_id
-        CARS.append(new_car)
-        return new_car, 201
-
-@ns_car.route('/<string:id>')
-@ns_car.param('id', 'ID автомобиля')
-@ns_car.response(404, 'Автомобиль не найден')
-class CarResource(Resource):
-    @ns_car.marshal_with(car_model)
-    def get(self, id):
-        """Получить автомобиль по ID"""
-        for car in CARS:
-            if car['id'] == id:
-                return car
-        api.abort(404, "Автомобиль не найден")
-
-    @ns_car.expect(car_model)
-    @ns_car.marshal_with(car_model)
-    def put(self, id):
-        """Обновить данные автомобиля"""
-        for car in CARS:
-            if car['id'] == id:
-                car.update(api.payload)
-                return car
-        api.abort(404, "Автомобиль не найден")
-
-    def delete(self, id):
-        """Удалить автомобиль"""
-        global CARS
-        CARS = [car for car in CARS if car['id'] != id]
-        return {'message': 'Автомобиль удален'}, 200
-
-
-from car_api.cars import api as cars_ns
-from car_api.templates import templ as car_templ
-api.add_namespace(cars_ns)
-app.register_blueprint(car_templ, url_prefix='/car-templ')
 
 if __name__ == '__main__':
     app.run(debug=True)

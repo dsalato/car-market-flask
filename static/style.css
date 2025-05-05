@@ -18,24 +18,24 @@ body {
 header {
     display: flex;
     justify-content: space-between;
-    align-items: center; /* Выравниваем элементы по центру по вертикали */
+    align-items: center;
     padding: 1rem 2rem;
     background-color: #f8f9fa;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 header h2 {
-    margin: 0; /* Убираем стандартные отступы h2 */
-    padding: 0; /* На всякий случай */
+    margin: 0;
+    padding: 0;
     color: #333;
     font-size: 1.5rem;
-    line-height: 1; /* Фиксируем line-height */
+    line-height: 1;
 }
 
 nav {
     display: flex;
     gap: 1rem;
-    align-items: center; /* Выравниваем ссылки по центру */
+    align-items: center;
 }
 
 nav a {
@@ -45,7 +45,7 @@ nav a {
     padding: 0.5rem 1rem;
     border-radius: 4px;
     transition: background-color 0.3s ease;
-    line-height: 1; /* Убираем лишнюю высоту */
+    line-height: 1;
 }
 
 nav a:hover {
@@ -88,7 +88,14 @@ tr:nth-child(even) {
     border-radius: 3px;
     font-size: 14px;
 }
-
+.view {
+    background-color: #0000ff;
+    color: white;
+    padding: 5px 10px;
+    text-decoration: none;
+    border-radius: 3px;
+    font-size: 14px;
+}
 .edit {
     background-color: #4CAF50;
     color: white;
@@ -98,6 +105,7 @@ tr:nth-child(even) {
     background-color: #f44336;
     color: white;
 }
+
 
 .submit {
     background-color: #4CAF50;
@@ -133,4 +141,85 @@ form {
     padding: 20px;
     border-radius: 5px;
     box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+.car_a{
+   text-decoration: none;
+    color: white;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+    line-height: 1;
+}
+.car_a:hover {
+    color: grey;
+}
+/* Стили для страницы детальной информации */
+
+.car-info {
+    display: flex;
+    gap: 30px;
+    margin-bottom: 30px;
+}
+
+.car-image {
+    flex: 1;
+}
+
+.car-image img {
+    width: 100%;
+    max-width: 400px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.car-specs {
+    flex: 2;
+}
+
+.car-specs table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.car-specs th, .car-specs td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.car-specs th {
+    background-color: #35424a;
+}
+
+.car-stats {
+    background-color: #f9f9f9;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+}
+
+.stat-section {
+    margin-bottom: 20px;
+}
+
+.stat-section h3 {
+    margin-top: 0;
+    color: #333;
+}
+
+.higher {
+    color: #e74c3c;
+    font-weight: bold;
+}
+
+.lower {
+    color: #2ecc71;
+    font-weight: bold;
+}
+
+.actions {
+    display: flex;
+    gap: 10px;
+
 }
