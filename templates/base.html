@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Market</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h2>Рынок автомобилей</h2>
+
+            <nav>
+                <a href="/api/docs">Документация</a>
+                <a href="{{ url_for('web.list_cars') }}">Все автомобили</a>
+                <a href="{{ url_for('web.add_car') }}">Добавить автомобиль</a>
+            </nav>
+        </header>
+        <main>
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</body>
+</html>

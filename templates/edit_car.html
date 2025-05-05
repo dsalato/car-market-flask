@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2>{% if car %}Изменить{% else %}Добавить{% endif %} автомобиль</h2>
+    <form method="POST">
+        <div class="form-group">
+            <label for="brand">Марка:</label>
+            <input type="text" id="brand" name="brand" value="{{ car.brand if car }}" required>
+        </div>
+        <div class="form-group">
+            <label for="model">Модель:</label>
+            <input type="text" id="model" name="model" value="{{ car.model if car }}" required>
+        </div>
+        <div class="form-group">
+            <label for="year">Год:</label>
+            <input type="number" id="year" name="year" value="{{ car.year if car }}">
+        </div>
+        <div class="form-group">
+            <label for="price">Цена ($):</label>
+            <input type="number" step="0.01" id="price" name="price" value="{{ car.price if car }}" required>
+        </div>
+        <div class="form-group">
+            <label for="mileage">Пробег (km):</label>
+            <input type="number" id="mileage" name="mileage" value="{{ car.mileage if car }}">
+        </div>
+        <button type="submit" class="btn submit">Сохранить</button>
+        <a href="{{ url_for('web.list_cars') }}" class="btn cancel">Отмена</a>
+    </form>
+{% endblock %}
