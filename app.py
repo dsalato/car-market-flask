@@ -26,6 +26,100 @@ CARS = [
     {'id': '1', 'brand': 'Toyota', 'model': 'Camry', 'year': 2020, 'price': 25000, 'mileage': 15000},
     {'id': '2', 'brand': 'BMW', 'model': 'X5', 'year': 2019, 'price': 45000, 'mileage': 30000},
 ]
+# Парсеры для API
+sort_parser = reqparse.RequestParser()
+sort_parser.add_argument('sort_by', type=str, help='Поле для сортировки (brand, model, year, price, mileage)')
+sort_parser.add_argument('order', type=str, choices=['asc', 'desc'], default='asc', help='Порядок сортировки')
+
+# API Namespace
+ns_car = api.namespace('cars', description='Операции с автомобилями')
+
+
+@ns_car.route('/')
+class CarList(Resource):
+    @ns_car.expect(sort_parser)
+    @ns_car.marshal_list_with(car_model)
+    def get(self):
+        """Список всех автомобилей с возможностью сортировки"""
+        args = sort_parser.parse_args()
+        cars = CARS.copy()
+
+        if args['sort_by'] and args['sort_by'] in ['brand', 'model', 'year', 'price', 'mileage']:
+            reverse = args['order'] == 'desc'
+            cars.sort(key=lambda x: x.get(args['sort_by'], ''), reverse=reverse)
+
+        return cars
+
+    @ns_car.expect(car_model)
+    @ns_car.marshal_with(car_model, code=201)
+    def post(self):
+        """Добавить новый автомобиль"""
+        new_car = api.payload
+        new_id = str(max(int(car['id']) for car in CARS) + 1) if CARS else '1'
+        new_car['id'] = new_id
+        CARS.append(new_car)
+        return new_car, 201
+
+
+@ns_car.route('/stats')
+class CarStats(Resource):
+    def get(self):
+        """Статистика по всем автомобилям"""
+        if not CARS:
+            return {'message': 'Нет данных для анализа'}, 404
+
+        prices = [car['price'] for car in CARS]
+        years = [car['year'] for car in CARS if car.get('year') is not None]
+        mileages = [car['mileage'] for car in CARS if car.get('mileage') is not None]
+
+        return {
+            'count': len(CARS),
+            'price': {
+                'avg': round(statistics.mean(prices), 2) if prices else None,
+                'max': max(prices) if prices else None,
+                'min': min(prices) if prices else None
+            },
+            'year': {
+                'avg': round(statistics.mean(years), 1) if years else None,
+                'max': max(years) if years else None,
+                'min': min(years) if years else None
+            },
+            'mileage': {
+                'avg': round(statistics.mean(mileages), 1) if mileages else None,
+                'max': max(mileages) if mileages else None,
+                'min': min(mileages) if mileages else None
+            }
+        }
+
+
+@ns_car.route('/<string:id>')
+@ns_car.param('id', 'ID автомобиля')
+@ns_car.response(404, 'Автомобиль не найден')
+class CarResource(Resource):
+    @ns_car.marshal_with(car_model)
+    def get(self, id):
+        """Получить информацию о конкретном автомобиле"""
+        car = next((car for car in CARS if car['id'] == id), None)
+        if car:
+            return car
+        api.abort(404, "Автомобиль не найден")
+
+    @ns_car.expect(car_model)
+    @ns_car.marshal_with(car_model)
+    def put(self, id):
+        """Обновить информацию об автомобиле"""
+        car = next((car for car in CARS if car['id'] == id), None)
+        if car:
+            car.update(api.payload)
+            return car
+        api.abort(404, "Автомобиль не найден")
+
+    def delete(self, id):
+        """Удалить автомобиль"""
+        global CARS
+        CARS = [car for car in CARS if car['id'] != id]
+        return {'message': 'Автомобиль удален'}, 200
+
 
 # Веб-интерфейс
 web = Blueprint('web', __name__, template_folder='templates', static_folder='static')
